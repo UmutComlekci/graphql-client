@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 
 namespace GraphQL {
-
 	/// <summary>
 	/// Represents a GraphQL Location of a GraphQL Query
 	/// </summary>
 	public sealed class GraphQLLocation : IEquatable<GraphQLLocation?> {
-
 		/// <summary>
 		/// The Column
 		/// </summary>
@@ -62,5 +60,4 @@ namespace GraphQL {
 			!EqualityComparer<GraphQLLocation?>.Default.Equals(left, right);
 
 	}
-
 }

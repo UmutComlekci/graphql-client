@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace GraphQL.Client {
-
 	public class GraphQLResponse<T> : IEquatable<GraphQLResponse<T>?> {
-
 		public T Data { get; set; }
 
 		public GraphQLError[]? Errors { get; set; }
@@ -58,5 +56,4 @@ namespace GraphQL.Client {
 	/// The dynamic version of <see cref="GraphQLResponse{T}"/>
 	/// </summary>
 	public class GraphQLResponse : GraphQLResponse<dynamic?> { }
-
 }

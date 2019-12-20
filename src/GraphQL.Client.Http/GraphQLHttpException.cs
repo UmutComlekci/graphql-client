@@ -2,7 +2,6 @@ using System;
 using System.Net.Http;
 
 namespace GraphQL.Client.Http {
-
 	/// <summary>
 	/// An exception thrown on unexpected <see cref="System.Net.Http.HttpResponseMessage"/>
 	/// </summary>
@@ -20,7 +19,5 @@ namespace GraphQL.Client.Http {
 		public GraphQLHttpException(HttpResponseMessage httpResponseMessage) : base($"Unexpected {nameof(System.Net.Http.HttpResponseMessage)} with code: {httpResponseMessage?.StatusCode}") {
 			this.HttpResponseMessage = httpResponseMessage ?? throw new ArgumentNullException(nameof(httpResponseMessage));
 		}
-
 	}
-
 }

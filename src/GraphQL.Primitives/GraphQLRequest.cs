@@ -2,12 +2,10 @@ using System;
 using System.Collections.Generic;
 
 namespace GraphQL {
-
 	/// <summary>
 	/// A GraphQL request
 	/// </summary>
 	public class GraphQLRequest : IEquatable<GraphQLRequest?> {
-
 		/// <summary>
 		/// The Query
 		/// </summary>
@@ -68,7 +66,6 @@ namespace GraphQL {
 	}
 
 	public class GraphQLRequest<T> : GraphQLRequest, IEquatable<GraphQLRequest<T>?> {
-
 		/// <summary>
 		/// Represents the variables sended
 		/// </summary>
@@ -121,5 +118,4 @@ namespace GraphQL {
 		public static bool operator !=(GraphQLRequest<T>? left, GraphQLRequest<T>? right) => !(left == right);
 
 	}
-
 }

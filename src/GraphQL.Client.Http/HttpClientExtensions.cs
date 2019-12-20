@@ -2,9 +2,7 @@ using System;
 using System.Net.Http;
 
 namespace GraphQL.Client.Http {
-
 	public static class HttpClientExtensions {
-
 		public static GraphQLHttpClient AsGraphQLClient(this HttpClient httpClient, string endPoint) =>
 			new GraphQLHttpClient(endPoint, httpClient);
 
@@ -16,7 +14,5 @@ namespace GraphQL.Client.Http {
 
 		public static GraphQLHttpClient AsGraphQLClient(this HttpClient httpClient, Uri endPoint, GraphQLHttpClientOptions graphQLHttpClientOptions) =>
 			new GraphQLHttpClient(endPoint, graphQLHttpClientOptions, httpClient);
-
 	}
-
 }

@@ -8,70 +8,55 @@ using System.Threading.Tasks;
 namespace GraphQL.Client.Http {
 
 	public class GraphQLHttpClient : IDisposable, IGraphQLClient {
-
 		public Uri EndPoint { get; set; }
 
 		public JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions {
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 
-		private readonly HttpClient httpClient;
+		private readonly GraphQLHttpClientOptions _options;
+		private readonly HttpClient _httpClient;
 
-		public GraphQLHttpClient(string endPoint) {
-			this.EndPoint = new Uri(endPoint);
-			this.httpClient = new HttpClient();
-		}
+		/// <summary>Whether the instance has been disposed.</summary>
+		private bool isDisposed;
 
-		public GraphQLHttpClient(Uri endPoint) {
-			this.EndPoint = endPoint;
-			this.httpClient = new HttpClient();
-		}
+		public GraphQLHttpClient(string endPoint) : this(new Uri(endPoint)) { }
 
-		public GraphQLHttpClient(string endPoint, GraphQLHttpClientOptions options) {
-			this.EndPoint = new Uri(endPoint);
-			this.httpClient = new HttpClient();
-		}
+		public GraphQLHttpClient(Uri endPoint) : this(endPoint, new HttpClient()) { }
 
-		public GraphQLHttpClient(Uri endPoint, GraphQLHttpClientOptions options) {
-			this.EndPoint = endPoint;
-			this.httpClient = new HttpClient();
-		}
-
-		public GraphQLHttpClient(string endPoint, HttpClient httpClient) {
-			this.EndPoint = new Uri(endPoint);
-			this.httpClient = httpClient;
-		}
+		public GraphQLHttpClient(string endPoint, HttpClient httpClient) : this(new Uri(endPoint), httpClient) { }
 
 		public GraphQLHttpClient(Uri endPoint, HttpClient httpClient) {
-			this.EndPoint = endPoint;
-			this.httpClient = httpClient;
+			EndPoint = endPoint;
+			_httpClient = httpClient;
 		}
 
-		public GraphQLHttpClient(string endPoint, GraphQLHttpClientOptions options, HttpClient httpClient) {
-			this.EndPoint = new Uri(endPoint);
-			this.httpClient = httpClient;
-		}
+		public GraphQLHttpClient(string endPoint, GraphQLHttpClientOptions options) : this(new Uri(endPoint), options) { }
+
+		public GraphQLHttpClient(Uri endPoint, GraphQLHttpClientOptions options) : this(endPoint, options, new HttpClient()) { }
+
+		public GraphQLHttpClient(string endPoint, GraphQLHttpClientOptions options, HttpClient httpClient)
+			: this(new Uri(endPoint), options, httpClient) { }
 
 		public GraphQLHttpClient(Uri endPoint, GraphQLHttpClientOptions options, HttpClient httpClient) {
-			this.EndPoint = endPoint;
-			this.httpClient = httpClient;
+			EndPoint = endPoint;
+			_httpClient = httpClient;
+			_options = options;
 		}
 
-		public void Dispose() => this.httpClient.Dispose();
-
 		public async Task<GraphQLHttpResponse<TResponse>> SendHttpQueryAsync<TVariable, TResponse>(GraphQLHttpRequest<TVariable> request, CancellationToken cancellationToken = default) {
-			using var httpRequestMessage = this.GenerateHttpRequestMessage(request);
-			using var httpResponseMessage = await this.httpClient.SendAsync(httpRequestMessage, cancellationToken);
+			using var httpRequestMessage = GenerateHttpRequestMessage(request);
+			using var httpResponseMessage = await _httpClient.SendAsync(httpRequestMessage, cancellationToken);
 			if (!httpResponseMessage.IsSuccessStatusCode) {
 				throw new GraphQLHttpException(httpResponseMessage);
 			}
 
 			var bodyStream = await httpResponseMessage.Content.ReadAsStreamAsync();
-			return await JsonSerializer.DeserializeAsync<GraphQLHttpResponse<TResponse>>(bodyStream, this.JsonSerializerOptions, cancellationToken);
+			return await JsonSerializer.DeserializeAsync<GraphQLHttpResponse<TResponse>>(bodyStream, JsonSerializerOptions, cancellationToken);
 		}
 
 		public async Task<GraphQLHttpResponse<TResponse>> SendHttpQueryAsync<TResponse>(GraphQLHttpRequest request, CancellationToken cancellationToken = default) =>
-			await this.SendHttpQueryAsync<dynamic, TResponse>(request, cancellationToken);
+			await SendHttpQueryAsync<dynamic, TResponse>(request, cancellationToken);
 
 		public async Task<GraphQLHttpResponse<TResponse>> SendHttpMutationAsync<TVariable, TResponse>(GraphQLHttpRequest<TVariable> request, CancellationToken cancellationToken = default) {
 			await Task.CompletedTask;
@@ -89,8 +74,8 @@ namespace GraphQL.Client.Http {
 		}
 
 		private HttpRequestMessage GenerateHttpRequestMessage<T>(GraphQLRequest<T> request) {
-			return new HttpRequestMessage(HttpMethod.Post, this.EndPoint) {
-				Content = new StringContent(JsonSerializer.Serialize(request, this.JsonSerializerOptions), Encoding.UTF8, "application/json")
+			return new HttpRequestMessage(HttpMethod.Post, EndPoint) {
+				Content = new StringContent(JsonSerializer.Serialize(request, JsonSerializerOptions), Encoding.UTF8, "application/json")
 			};
 		}
 
@@ -103,6 +88,19 @@ namespace GraphQL.Client.Http {
 			await Task.CompletedTask;
 			throw new NotImplementedException();
 		}
-	}
 
+		public void Dispose() => Dispose(true);
+
+		/// <summary>Free resources used by the client.</summary>
+		/// <param name="isDisposing">Whether the dispose method was explicitly called.</param>
+		protected virtual void Dispose(bool isDisposing) {
+			if (isDisposed)
+				return;
+
+			if (isDisposing)
+				_httpClient.Dispose();
+
+			isDisposed = true;
+		}
+	}
 }

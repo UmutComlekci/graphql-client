@@ -37,8 +37,6 @@ namespace GraphQL.Client.Http {
 		/// <summary>
 		/// The <see cref="MediaTypeHeaderValue"/> that will be send on POST
 		/// </summary>
-		public MediaTypeHeaderValue MediaType { get; set; } = MediaTypeHeaderValue.Parse("application/json; charset=utf-8"); // This should be "application/graphql" also "application/x-www-form-urlencoded" is Accepted
-
+		public MediaTypeHeaderValue MediaType { get; set; } = MediaTypeHeaderValue.Parse("application/json; charset=utf-8"); // This should be "application/graphql" also "application/x-www-form-urlencoded" is Accepte
 	}
-
 }
