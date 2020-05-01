@@ -1,6 +1,6 @@
 # GraphQL.Client
 [![NuGet](https://img.shields.io/nuget/v/GraphQL.Client.svg)](https://www.nuget.org/packages/GraphQL.Client)
-[![MyGet](https://img.shields.io/myget/graphql-dotnet/v/GraphQL.Client.svg)](https://www.myget.org/feed/graphql-dotnet/package/nuget/GraphQL.Client)
+[![NuGet](https://img.shields.io/nuget/vpre/GraphQL.Client.svg)](https://www.nuget.org/packages/GraphQL.Client)
 
 A GraphQL Client for .NET Standard over HTTP.
 
@@ -16,52 +16,105 @@ The Library will try to follow the following standards and documents:
 ```csharp
 var heroRequest = new GraphQLRequest {
     Query = @"
-	{
-		hero {
-			name
-		}
-	}"
+    {
+        hero {
+            name
+        }
+    }"
 };
 ```
 
 #### OperationName and Variables Request:
+
 ```csharp
-var heroAndFriendsRequest = new GraphQLRequest {
+var personAndFilmsRequest = new GraphQLRequest {
     Query =@"
-	query HeroNameAndFriends($episode: Episode) {
-		hero(episode: $episode) {
-			name
-			friends {
-				name
-			}
-		}
-	}",
-	OperationName = "HeroNameAndFriends",
-	Variables = new {
-		episode = "JEDI"
-	}
+    query PersonAndFilms($id: ID) {
+        person(id: $id) {
+            name
+            filmConnection {
+                films {
+                    title
+                }
+            }
+        }
+    }",
+    OperationName = "PersonAndFilms",
+    Variables = new {
+        id = "cGVvcGxlOjE="
+    }
 };
 ```
 
-### Send Request:
+Be careful when using `byte[]` in your variables object, as most JSON serializers will treat that as binary data! If you really need to send a *list of bytes* with a `byte[]` as a source, then convert it to a `List<byte>` first, which will tell the serializer to output a list of numbers instead of a base64-encoded string.
+
+### Execute Query/Mutation:
+
 ```csharp
-var graphQLClient = new GraphQLClient("https://swapi.apis.guru/");
-var graphQLResponse = await graphQLClient.PostAsync(heroRequest);
+var graphQLClient = new GraphQLHttpClient("https://swapi.apis.guru/", new NewtonsoftJsonSerializer());
+
+public class PersonAndFilmsResponse {
+    public PersonContent Person { get; set; }
+
+    public class PersonContent {
+        public string Name { get; set; }
+        public FilmConnectionContent FilmConnection { get; set; }
+
+        public class FilmConnectionContent {
+            public List<FilmContent> Films { get; set; }
+
+            public class FilmContent {
+                public string Title { get; set; }
+            }
+        }
+    }
+}
+
+var graphQLResponse = await graphQLClient.SendQueryAsync<PersonAndFilmsResponse>(personAndFilmsRequest);
+
+var personName = graphQLResponse.Data.Person.Name;
 ```
 
-### Read GraphQLResponse:
 
-#### Dynamic:
+### Use Subscriptions
+
 ```csharp
-var graphQLResponse = await graphQLClient.PostAsync(heroRequest);
-var dynamicHeroName = graphQLResponse.Data.hero.name.Value; //Value of data->hero->name
+public class UserJoinedSubscriptionResult {
+    public ChatUser UserJoined { get; set; }
+
+    public class ChatUser {
+        public string DisplayName { get; set; }
+        public string Id { get; set; }
+    }
+}
 ```
 
-#### Typed:
+#### Create subscription
+
 ```csharp
-var graphQLResponse = await graphQLClient.PostAsync(heroRequest);
-var personType = graphQLResponse.GetDataFieldAs<Person>("hero"); //data->hero is casted as Person
-var name = personType.Name;
+var userJoinedRequest = new GraphQLRequest {
+    Query = @"
+    subscription {
+        userJoined{
+            displayName
+            id
+        }
+    }"
+};
+
+IObservable<GraphQLResponse<UserJoinedSubscriptionResult>> subscriptionStream 
+    = client.CreateSubscriptionStream<UserJoinedSubscriptionResult>(userJoinedRequest);
+
+var subscription = subscriptionStream.Subscribe(response => 
+    {
+        Console.WriteLine($"user '{response.Data.UserJoined.DisplayName}' joined")
+    });
+```
+
+#### End Subscription
+
+```csharp
+subscription.Dispose();
 ```
 
 ## Useful Links:
